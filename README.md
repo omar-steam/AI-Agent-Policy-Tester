@@ -189,9 +189,7 @@ Inspired by research on AI agent security, deterministic action mediation, infor
 
 **Goal:** Find policy failures before agents can take consequential actions.
 
-## Run unit tests
+# Research Paper That Inspired This Project 
 
-```bash
-python -m unittest discover -s tests -v
-```
- 
+CaMeL orchestrated with Temporal logic for static verification and liveness: https://arxiv.org/pdf/2609.18674
+The LLMbda Calculus: https://arxiv.org/pdf/2602.20064
