@@ -181,7 +181,7 @@ Suggested metrics: mutation detection rate, false-positive rate, incremental det
 
 ## License
 
-No project license has been selected. Add a `LICENSE` file before redistributing or accepting contributions. Kev has its own license and model terms; consult its official repository.
+Apache License. Kev has its own license and model terms; consult its official repository.
 
 ## Acknowledgements
 
