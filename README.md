@@ -7,9 +7,6 @@ a **small local LLM (< 3B parameters, via Ollama)** that generates the test case
 
 > Research prototype. Synthetic data only. Not a security guarantee, and not for authorizing real actions.
 
-This project merges two earlier pieces: a CaMeL-inspired email-policy fuzzer and the uploaded
-"Qwen red-team" finance POC (patched; see [What changed](#what-changed-from-the-uploaded-poc)).
-
 ## Quick start (VS Code)
 
 1. **Open the folder** in VS Code (`File > Open Folder…` → this directory). Accept the "install recommended extensions" prompt (Python).
