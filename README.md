@@ -188,13 +188,6 @@ This project tests policies of the kind used in **CaMeL**, a design that defends
 
 This is an independent project. It is **not** an implementation of CaMeL and is not affiliated with its authors. CaMeL enforces policies; this workbench tests whether such policies have bugs, which is a separate question.
 
-**Primary reference**
+**The paper that inspired this project**
 
 - Debenedetti et al. *Defeating Prompt Injections by Design* (CaMeL). arXiv:2503.18813, 2025. https://arxiv.org/abs/2503.18813
-
-**Related work** (titles only; consult the papers for what they actually show)
-
-- *CaMeLoT: CaMeL orchestrated with Temporal logic for static verification and liveness*. arXiv:2609.18674
-- *The LLMbda Calculus: AI Agents, Conversations, and Information Flow*. arXiv:2602.20064
-- *Tracking Capabilities for Safer Agents*. arXiv:2603.00991
-- *CaMeLs Can Use Computers Too: System-level Security for Computer Use Agents*. arXiv:2601.09923
