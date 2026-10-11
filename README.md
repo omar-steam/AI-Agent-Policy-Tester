@@ -1,5 +1,4 @@
 # AI Agent Policy Tester
-# AI Agent Policy Testing Workbench
 
 Find bugs in the **rules that decide what an AI agent may do** (for example "transfers over $500 need approval" or "never email private data to an outsider").
 
