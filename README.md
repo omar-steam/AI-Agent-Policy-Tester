@@ -56,22 +56,6 @@ python -m unittest discover -s tests -v
 
 **Score** = fraction of injected bugs a generator detects, plus **0 findings on the clean policy** (no false positives).
 
-### Results from the offline run (400 scenarios, seed 0)
-
-| Domain | random inputs | hostile mutation inputs | clean-policy false positives |
-|---|---|---|---|
-| finance (12 targets incl. `LEGACY`) | 5 / 12 found | **12 / 12** found | 0 |
-| mail (9 bugs) | 6 / 9 found | **9 / 9** found | 0 |
-
-I could **not** run a real Ollama model where this was built (no Ollama in that sandbox). The LLM path is tested
-against a mock Ollama server (request shape, messy output parsing, dedupe, error handling), not against real
-Qwen/Llama output. The first thing to do on your machine is run the `ollama` generator in the matrix and compare it with
-`mutation`; I would not assume a sub-3B model beats the deterministic mutator.
-
-## What changed from the uploaded POC
-
-The original engine (`LEGACY`) fails open. Confirmed by running it:
-
 | Original behavior | Now |
 |---|---|
 | `wire`, `pay`, `"Transfer "`, unknown or missing action skip the amount and recipient rules | Action must be a known value; otherwise deny. |
