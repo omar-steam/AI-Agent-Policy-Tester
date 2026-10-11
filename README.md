@@ -1,193 +1,101 @@
 # AI Agent Policy Testing Workbench
 
-**A local-first research prototype for testing security policies in AI-agent workflows.**
+A local-first Streamlit prototype for testing explicit policies used by AI-agent workflows. The red-team feature uses **only the local Qwen model through Ollama** to generate synthetic adversarial test cases. A deterministic Python policy engine evaluates the structured action fields; the model does not decide whether an action is allowed.
 
-This Streamlit app explores whether systematic test generation and a small local decision model can help find bugs in agent policies. Initial financial-agent examples cover approval thresholds, recipient allowlists, untrusted instructions, and delegated-agent objections.
+> **Research prototype only.** No payment or external tool integrations are included. Use synthetic data, keep Ollama bound to localhost, and do not use this prototype to authorize real actions.
 
-> **Status:** Research POC. Not production-ready and not a formal verification system.
+## What’s new: adversarial red-team lab
 
-## Research question
+The **5 · Red team** tab adds an attacker-versus-policy-testing workflow:
 
-**Can a small local decision model improve automated policy-bug detection beyond a manually written test suite?**
+1. **Seed attacks** — load six synthetic cases covering untrusted email/webpage instructions, fake approval claims, recipient spoofing, delegated objections, and a boundary control.
+2. **Qwen as attacker** — ask the local model to generate diverse synthetic cases such as prompt-injection attempts, authority spoofing, instruction laundering, boundary manipulation, conflicts, and missing data.
+3. **Deterministic evaluation** — run each structured scenario against the explicit policy rules.
+4. **Triage potential bypasses** — highlight cases labeled `expected=deny` that the policy engine allows, plus all expected/actual mismatches.
+5. **Export evidence** — download a JSON report containing the policy, generated cases, outcomes, model name, timestamp, and limitations.
 
-## Features
+The red-team feature calls Ollama’s local `/api/generate` endpoint. **No cloud model or Kev service is required for red-team testing.** The existing optional Kev analysis tab remains separate from this workflow; you can ignore it entirely when running the Qwen red-team POC.
 
-- Streamlit policy editor for structured JSON rules.
-- Deterministic allow/deny evaluation in a UI-independent `policy_engine.py` module, with unit tests.
-- Hand-written scenarios and optional Ollama-based test generation.
-- Optional **Kev local decision analysis** using Kev's `/v1/systemone` API.
-- Comparison of deterministic decisions with Kev's risk classification.
-- Disagreement flags for human review.
-- JSON export of test results and Kev analysis.
-- No cloud inference API required. After dependencies and model weights are downloaded, inference can run locally.
+### Important limitation
 
-## Architecture
+This is a **structured policy-logic red-team POC**, not a full end-to-end prompt-injection test. The current deterministic evaluator reads fields such as `instruction_source`, `recipient`, `amount`, `approval`, and `objection`; it does not run an AI agent that interprets the free-text `attack_text`. A “potential bypass” means the structured test was expected to be denied but the current rule engine allowed it. It is a review signal, not proof of a real-world compromise. Model-generated cases and expected outcomes must be reviewed by a human.
 
-```text
-                   Streamlit UI
-                        |
-              Policy + test scenarios
-                        |
-           +------------+-------------+
-           |                          |
-   Deterministic evaluator      Test generation
-           |                   (optional Ollama)
-           +------------+-------------+
-                        |
-                 Policy test results
-                        |
-                 Optional Kev analysis
-                        |
-            Risk classification + review score
-                        |
-                 Disagreement report
-```
+## Requirements
 
-The deterministic evaluator is the reference for supported rules. Kev supplies an independent advisory classification; it does not authorize actions or replace the evaluator. A disagreement is a signal to investigate, not proof that either component is wrong.
+- Python 3.10+
+- [Ollama](https://ollama.com/) installed and running locally
+- A local Qwen model; the example below uses `qwen2.5:3b`
 
-## Technology
-
-- Python 3.10+ for the Streamlit app.
-- Streamlit and Pandas.
-- [Ollama](https://ollama.com/) (optional) for local test generation.
-- [Kev](https://github.com/jaredpalmer/kev) for local decision analysis.
-- JSON for policies, scenarios, and exported results.
-
-Kev's own server currently requires Python 3.12 or 3.13 and `uv`, so run it in a separate environment.
-
-## Quick start: Streamlit app
+## Run locally
 
 ```bash
 python -m venv .venv
 
-# macOS / Linux
+# macOS/Linux
 source .venv/bin/activate
 
-# Windows PowerShell:
+# Windows PowerShell
 # .venv\Scripts\Activate.ps1
 
 pip install -r requirements.txt
+ollama pull qwen2.5:3b
 streamlit run app.py
 ```
 
-Open the local URL displayed by Streamlit, usually `http://localhost:8501`. The deterministic evaluator and seven included sample scenarios work without Ollama or Kev.
+Open the local Streamlit URL shown in the terminal. In the sidebar, use:
 
-## Run Kev locally
+- **Ollama URL:** `http://localhost:11434`
+- **Model name:** `qwen2.5:3b`
 
-Follow the latest instructions in the [official Kev repository](https://github.com/jaredpalmer/kev). The following commands reflect its documented serving workflow.
+Check the Ollama connection from the sidebar before generating attacks. The model must already be available locally. Once downloaded, prompts are sent to the local Ollama server rather than a hosted inference API.
 
-Kev requires Python 3.12 or 3.13 and `uv`. Clone it separately:
+## Suggested red-team runbook
 
-```bash
-git clone https://github.com/jaredpalmer/kev.git
-cd kev
-uv sync --extra serve
-```
+1. Open **1 · Policy** and review the sample policy and supported rules.
+2. Open **5 · Red team** and select **Load seed attack suite**.
+3. Run the seed cases against the deterministic policy and download the report.
+4. Select **Generate attacks with local Qwen** to replace the current red-team suite with model-generated cases.
+5. Inspect the attack fixtures and expected outcomes before running them.
+6. Run the cases, investigate **Potential bypasses** and **Oracle mismatches**, and download the report.
+7. Repeat with controlled policy mutations (for example, remove a rule or alter a threshold) to verify whether the test suite catches the seeded regression.
+8. Record which cases were human-reviewed. Do not treat the model’s labels as ground truth.
 
-Start the smallest released checkpoint:
+## Other tabs
 
-```bash
-uv run --extra serve python -m kev.serve \
-  --run jaredpalmer/kev-0.8b \
-  --port 8009
-```
+- **1 · Policy:** edit and validate the policy JSON.
+- **2 · Test cases:** inspect hand-written scenarios or generate general cases with local Qwen.
+- **3 · Results:** run the regular deterministic test suite and export results.
+- **4 · Kev analysis:** optional pre-existing integration for a separately hosted local Kev service; not needed for the Qwen red-team lab.
+- **5 · Red team:** generate adversarial cases with local Qwen, run them through the policy engine, inspect mismatches, and export a report.
+- **6 · Method & limits:** review evaluation limitations and suggested research metrics.
 
-The first launch downloads the model and base weights, so internet access is needed during setup unless those files are already cached. Inference can run locally afterward. Kev-0.8B is the size-oriented option, but is weaker than larger models on some out-of-domain tasks; validate it on your own data.
+## Supported rule types
 
-In the Streamlit sidebar, set:
+- `amount_requires_approval`: block transfers above a numeric threshold unless `approval` is true.
+- `recipient_allowlist`: block transfers to recipients not in `allowed_recipients`.
+- `untrusted_source_blocks_action`: block transfer-like actions when `instruction_source` is listed as untrusted.
+- `objection_blocks_action`: block an action when `objection` is true.
 
-- **Kev local server URL:** `http://127.0.0.1:8009`
-- **Kev model ID:** `kev-latest`
+Rules are combined conjunctively: any violation causes a deny. Unknown rule types are currently ignored by the evaluator; the policy validator warns about them. Treat unsupported rules as a test failure in any serious evaluation.
 
-Use **Check Kev connection**. Then run policy tests and open **4 · Kev analysis** to compare selected scenarios.
+## Research metrics
 
-If your hardware supports it, compare with `jaredpalmer/kev-4b`. Consult the official repository and model cards for current requirements.
+Track at least:
 
-### Offline and privacy notes
+- Potential-bypass rate on manually reviewed adversarial cases.
+- Expected/actual mismatch rate.
+- Unique counterexamples found per 100 generated tests.
+- Seeded regression detection rate when known rules are intentionally removed or mutated.
+- Human-review time per finding.
+- Repeatability across runs and model settings.
 
-- Do not enter a remote URL if you require offline-only inference.
-- Keep Kev bound to localhost; do not expose its unauthenticated local endpoint to a network.
-- Dependencies and model weights must be downloaded before going offline.
-- Optional Ollama generation also runs locally once its model is downloaded.
-- Avoid using real financial or personal data in experimental scenarios.
+## Safety and interpretation
 
-## Optional Ollama test generation
-
-Install Ollama and download a small model:
-
-```bash
-ollama pull qwen2.5:3b
-```
-
-Keep Ollama running. The app defaults to `http://localhost:11434`. Test generation is optional; you can edit scenarios manually.
-
-## Supported policy rules
-
-| Rule type | Purpose |
-|---|---|
-| `amount_requires_approval` | Require approval for transfers above a configured threshold. |
-| `recipient_allowlist` | Block recipients not on the approved list. |
-| `untrusted_source_blocks_action` | Block transfer-like actions initiated by a configured untrusted source. |
-| `objection_blocks_action` | Block an action when an unresolved agent objection is present. |
-
-Any applicable violation causes a deny. The initial evaluator supports only these rule types. Unknown rule types are not enforced; the UI warns about them.
-
-## Kev decision analysis
-
-For each selected scenario, the app sends the scenario and current policy JSON to the configured Kev server and asks:
-
-1. **Risk classification:** `likely_violation`, `likely_compliant`, or `ambiguous`.
-2. **Human review:** probability that the scenario should be reviewed before relying on the assessment.
-
-The app displays Kev's probabilities and flags obvious disagreements with the rule engine. Kev does not execute tools, change the policy, or make the authoritative allow/deny decision.
-
-Probabilities are not measured accuracy on this project. Evaluate them against independently labeled cases; do not assume a confidence threshold is reliable without measurement.
-
-## Research plan
-
-Compare three configurations on the same held-out scenarios:
-
-1. **Rules only:** deterministic evaluator and manually written tests.
-2. **Rules + generated tests:** add locally generated edge cases.
-3. **Rules + generated tests + Kev:** use Kev to classify scenarios and prioritize review.
-
-Introduce seeded defects such as removing approval checks, changing threshold boundaries, removing recipient checks, inverting source trust, and dropping delegated-agent objections.
-
-Suggested metrics: mutation detection rate, false-positive rate, incremental detection, counterexample diversity, disagreement rate on manually labeled cases, runtime, and compute requirements. Use independently specified or human-reviewed expected outcomes. A model must not be treated as its own ground-truth evaluator.
-
-## Limitations and safety
-
-- This is a research prototype, not a formal verifier.
-- Passing tests do not prove policy correctness or completeness.
-- The evaluator handles a limited set of structured, single-step rules.
-- Generated scenarios and model classifications can be wrong.
-- A model/evaluator disagreement is not automatically a bug.
-- Kev must not be used to authorize financial actions.
-- Do not connect the prototype to production payment systems, credentials, or real transaction APIs.
-
-## Project status
-
-- [x] Streamlit policy editor
-- [x] Deterministic evaluator for four rule types
-- [x] Seven sample scenarios
-- [x] Optional Ollama test generation
-- [x] Optional local Kev analysis via `/v1/systemone`
-- [x] Disagreement and human-review indicators
-- [x] JSON export
-- [ ] Unit tests and property-based testing
-- [ ] Seeded mutation-test harness
-- [ ] Benchmark dataset with human-reviewed labels
-- [ ] Multi-step temporal and delegation testing
-
-## License
-
-Apache License. Kev has its own license and model terms; consult its official repository.
-
-## Acknowledgements
-
-Inspired by research on AI agent security, deterministic action mediation, information-flow control, and decision models.
-
-**Goal:** Find policy failures before agents can take consequential actions.
+- All examples are synthetic. Never paste secrets, personal data, production prompts, or real transaction details into the POC.
+- Do not connect the app to real tools, accounts, financial systems, or production agents.
+- Treat `attack_text` as untrusted data. It is displayed for inspection and must never be executed as code or followed as an instruction.
+- A passing test suite does not prove the policy is secure or complete.
+- The model may produce malformed, incomplete, biased, or incorrect cases. Review each case and expected outcome before drawing conclusions.
 
 # Research Paper That Inspired This Project 
 
