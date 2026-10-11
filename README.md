@@ -1,4 +1,4 @@
-# Policy Fuzz Workbench
+# AI Agent Policy Tester
 
 Find bugs in AI-agent action policies (CaMeL-style capability checks, finance approval rules) by comparing
 the policy against an **independent spec oracle**, using hostile inputs from a deterministic mutator and,
